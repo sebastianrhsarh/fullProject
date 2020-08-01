@@ -1,0 +1,17 @@
+version: '3.5'
+services:
+  chorizord:
+    image: registry.gitlab.com/sebastianrh.sarh/solemne2_g1
+    deploy:
+      placement:
+        constraints: [node.role==worker]
+      labels:
+        traefik.http.routers.backend.rule: Host(`chorizord.rockstart.cl`)
+        traefik.http.routers.backend.middlewares: https-redirect@file
+        traefik.http.services.backend.loadbalancer.server.port: 80
+        traefik.docker.network: traefik-net
+    networks:
+      - traefik-net
+networks:
+  traefik-net:
+    external: true

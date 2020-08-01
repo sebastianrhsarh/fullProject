@@ -1,0 +1,75 @@
+def remoted = [:]
+remoted.name = "swarm"
+remoted.host = "traefik200.rockstart.cl"
+remoted.allowAnyHosts = true
+
+pipeline {
+  agent any
+
+  post {
+    failure {
+      updateGitlabCommitStatus name: 'build', state: 'failed'
+    }
+    success {
+      updateGitlabCommitStatus name: 'build', state: 'success'
+    }
+  }
+
+  options {
+    gitLabConnection('Gitlab')
+  }
+
+  environment {
+    frontendImage = ''
+  }
+
+  stages {
+    stage('Preparando las compilaciónes') {
+      steps {
+        echo 'Limpiando previo a la copilación'
+        script {
+          sh 'echo gCjJ4kQUrKh7w11j2EyH | cat | docker login registry.gitlab.com --username kerry --password-stdin'
+        }
+      }
+    }
+
+    stage('Copilando las imagenes') {
+      steps {
+        echo 'Comenzamos la copilación de frontend'
+        script {
+          frontendImage = docker.build("registry.gitlab.com/sebastianrh.sarh/solemne2_g1", ". -f ./.docker/Dockerfile")
+        }
+      }
+    }
+
+    stage('Se sincroniza la imagen en el repositorio') {
+      steps {
+        echo 'Subimos la imagen al repositorio'
+        script {
+          docker.withRegistry('https://registry.gitlab.com') {
+            echo 'Publicando imagen de Angular'
+            frontendImage.push()
+          }
+        }
+      }
+    }
+
+    stage('Generamos el release') {
+      steps {
+        echo 'Nos conectamos a GCP y desplegamos la app'
+        script {
+          withCredentials([sshUserPrivateKey(credentialsId: 'Jenkins', keyFileVariable: 'identity', passphraseVariable: '', usernameVariable: 'userName')]) {
+            remoted.user = userName
+            remoted.identityFile = identity
+
+            stage('Deploy app') {
+              sshCommand remote: remoted, command: "cd /home/jenkins/solemne2_g1/ && git pull origin master", sudo: false
+              sshCommand remote: remoted, command: "chmod 755 /home/jenkins/solemne2_g1/.docker/deploy.sh", sudo: false
+              sshCommand remote: remoted, command: "cd /home/jenkins/solemne2_g1 && .docker/deploy.sh", sudo: false
+            }
+          }
+        }
+      }
+    }
+  }
+}

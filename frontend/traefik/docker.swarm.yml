@@ -1,0 +1,28 @@
+version: '3.5'
+volumes:
+  traefik_acme:
+services:
+  traefik:
+    image: traefik:2.2
+    ports:
+      - "80:80"
+      - "443:443" 
+    volumes:
+      # Para usar el socket local de docker
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik.yml:/etc/traefik/traefik.yml
+      - traefik_acme:/etc/traefik/acme
+      - ./dynamic:/etc/traefik/dynamic/conf
+    deploy:
+      placement:
+        constraints: [node.role==manager]
+      labels:
+        traefik.http.routers.proxy.rule: Host(`traefik200.rockstart.cl`)
+        traefik.http.routers.proxy.middlewares: https-redirect@file,general-auth@file
+        traefik.http.services.proxy.loadbalancer.server.port: 8080
+        traefik.docker.network: traefik-net
+    networks:
+      - traefik-net
+networks:
+  traefik-net:
+    external: true

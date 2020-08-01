@@ -1,0 +1,35 @@
+version: '3'
+volumes:
+  db_data:
+networks:
+  chorizord_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 33.0.0.0/24    
+services:
+  mariadb:
+    image: mariadb
+    container_name: chorizord_db
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - 3636:3636
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+    networks: 
+      chorizord_network:
+        ipv4_address: 33.0.0.2
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: chorizord_phpmyadmin
+    environment:
+      PMA_HOST: mysql
+    links:
+      - "mariadb:mysql"
+    ports:
+      - 8000:80
+    networks: 
+      chorizord_network:
+        ipv4_address: 33.0.0.3

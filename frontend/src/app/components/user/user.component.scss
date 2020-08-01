@@ -1,0 +1,30 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  &__title {
+    font-size: 100px;
+  }
+
+  &__card {
+    width: 30%;
+    border: white 1px solid; 
+
+    &__header {
+      font-weight: bold;
+      color:black;
+    }
+
+    &__body {
+
+      &__title {
+        color: floralwhite;
+      }
+
+      &__text {
+        color: floralwhite;
+      }
+    }
+  }
+}

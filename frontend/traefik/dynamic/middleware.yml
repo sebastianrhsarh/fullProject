@@ -1,0 +1,10 @@
+http:
+  middlewares:
+    general-auth:
+      basicAuth:
+        users:
+          - "admin:$2y$10$KdKVUC0r.it4U0kAqj7iCu..4DKapXOml1wUCzPfiRUIo5B1a2sJa"
+    https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
